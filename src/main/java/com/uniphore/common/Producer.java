@@ -1,6 +1,8 @@
 package com.uniphore.common;
 
-public interface Producer {
+import java.io.Closeable;
+
+public interface Producer extends Closeable {
 
     void produce(Queue queue, byte[] message, MessagePriority priority);
 

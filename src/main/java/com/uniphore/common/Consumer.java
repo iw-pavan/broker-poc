@@ -1,6 +1,8 @@
 package com.uniphore.common;
 
-public interface Consumer {
+import java.io.Closeable;
+
+public interface Consumer extends Closeable {
 
     void consume(Queue queue, java.util.function.Consumer<byte[]> consumer);
 

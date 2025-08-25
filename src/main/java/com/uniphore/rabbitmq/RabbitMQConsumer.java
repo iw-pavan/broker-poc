@@ -8,11 +8,10 @@ import com.rabbitmq.client.Envelope;
 import com.uniphore.common.Consumer;
 import com.uniphore.common.Queue;
 import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class RabbitMQConsumer implements Consumer {
-
-    private static final AtomicInteger COUNTER = new AtomicInteger(RabbitMQUtils.MESSAGES_PER_THREAD * RabbitMQUtils.THREADS);
 
     private final Channel channel;
 
@@ -36,10 +35,18 @@ public class RabbitMQConsumer implements Consumer {
 
                             long deliveryTag = envelope.getDeliveryTag();
                             channel.basicAck(deliveryTag, false);
-                            COUNTER.decrementAndGet();
                         }
                     });
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        try {
+            channel.close();
+        } catch (TimeoutException e) {
             throw new RuntimeException(e);
         }
     }

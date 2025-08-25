@@ -47,4 +47,9 @@ public class RabbitMQBrokerFactory implements BrokerFactory {
             throw new RuntimeException(e);
         }
     }
+
+    @Override
+    public void close() throws IOException {
+        connection.close();
+    }
 }

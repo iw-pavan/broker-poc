@@ -8,6 +8,7 @@ import com.uniphore.common.Producer;
 import com.uniphore.common.Queue;
 import com.uniphore.common.Serde;
 import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
 public class RabbitMQProducer implements Producer {
 
@@ -22,6 +23,15 @@ public class RabbitMQProducer implements Producer {
         try {
             channel.basicPublish("", "default", null, message);
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        try {
+            channel.close();
+        } catch (TimeoutException e) {
             throw new RuntimeException(e);
         }
     }

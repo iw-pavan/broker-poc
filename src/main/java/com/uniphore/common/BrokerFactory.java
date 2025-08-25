@@ -1,6 +1,8 @@
 package com.uniphore.common;
 
-public interface BrokerFactory {
+import java.io.Closeable;
+
+public interface BrokerFactory extends Closeable {
 
     Queue getQueue();
 
