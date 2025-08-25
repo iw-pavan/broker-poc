@@ -4,6 +4,8 @@ import com.uniphore.common.Message;
 import com.uniphore.common.MessagePriority;
 import com.uniphore.common.Producer;
 import com.uniphore.common.Queue;
+import com.uniphore.common.Serde;
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +29,7 @@ public class ProducerRunner extends Runner {
 
         long end = System.currentTimeMillis();
         System.out.println("Producer Time taken: " + (end - start) + " ms");
+        getBrokerFactory().close();
     }
 
     private static Runnable getRunnable(final int i, Queue queue) {
@@ -36,13 +39,16 @@ public class ProducerRunner extends Runner {
                 String message = "Message-" + j + " from " + Thread.currentThread().getName();
                 try {
                     Message m = new Message(i * j, message);
-                    producer.produce(queue, message.getBytes(), MessagePriority.NORMAL);
-                    if (j % 100 == 0) {
-                        System.out.println("Produced: " + message);
-                    }
+                    producer.produce(queue, Serde.serialize(m), MessagePriority.NORMAL);
+                    System.out.println("Produced: " + message);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+            }
+            try {
+                producer.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         };
     }
