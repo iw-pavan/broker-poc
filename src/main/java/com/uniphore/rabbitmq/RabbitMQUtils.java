@@ -1,11 +1,8 @@
-package com.uniphore;
+package com.uniphore.rabbitmq;
 
 import com.rabbitmq.client.ConnectionFactory;
 
 public class RabbitMQUtils {
-
-    public static final int THREADS = 4;
-    public static final int MESSAGES_PER_THREAD = 250_000;
 
     public static ConnectionFactory getConnectionFactory() {
         ConnectionFactory factory = new ConnectionFactory();
