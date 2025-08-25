@@ -1,12 +1,9 @@
 package com.uniphore.main;
 
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
 import com.uniphore.common.Message;
 import com.uniphore.common.MessagePriority;
 import com.uniphore.common.Producer;
 import com.uniphore.common.Queue;
-import com.uniphore.rabbitmq.RabbitMQUtils;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -38,8 +35,8 @@ public class ProducerRunner extends Runner {
             for (int j = 0 ; j < MESSAGES_PER_THREAD; j++) {
                 String message = "Message-" + j + " from " + Thread.currentThread().getName();
                 try {
-                    Message m = new Message(i * j, message, MessagePriority.NORMAL);
-                    producer.produce(queue, message.getBytes());
+                    Message m = new Message(i * j, message);
+                    producer.produce(queue, message.getBytes(), MessagePriority.NORMAL);
                     if (j % 100 == 0) {
                         System.out.println("Produced: " + message);
                     }

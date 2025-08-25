@@ -3,6 +3,7 @@ package com.uniphore.rabbitmq;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.uniphore.common.Message;
+import com.uniphore.common.MessagePriority;
 import com.uniphore.common.Producer;
 import com.uniphore.common.Queue;
 import com.uniphore.common.Serde;
@@ -17,7 +18,7 @@ public class RabbitMQProducer implements Producer {
     }
 
     @Override
-    public void produce(Queue queue, byte[] message) {
+    public void produce(Queue queue, byte[] message, MessagePriority priority) {
         try {
             channel.basicPublish("", "default", null, message);
         } catch (IOException e) {

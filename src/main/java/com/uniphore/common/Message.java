@@ -12,6 +12,5 @@ public class Message implements Serializable {
 
     private int messageId;
     private String messageBody;
-    private MessagePriority priority = MessagePriority.NORMAL;
 
 }
