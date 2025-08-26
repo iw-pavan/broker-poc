@@ -39,11 +39,11 @@ public class KafkaProducerWrapper implements Producer {
       }
     });
     //flush should not be after every message in production code
-    kafkaProducer.flush();
   }
 
   @Override
   public void close() {
+    kafkaProducer.flush();
     kafkaProducer.close();
   }
 }

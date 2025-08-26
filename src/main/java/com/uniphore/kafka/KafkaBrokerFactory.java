@@ -8,12 +8,12 @@ public class KafkaBrokerFactory implements BrokerFactory {
 
   @Override
   public Queue getQueue() {
-    return ()-> "batch-topic-1m-4p-byte-array-1";
+    return ()-> "batch-topic-1m-4p-byte-array-3";
   }
 
   @Override
   public Queue getDelayedQueue() {
-    return ()->"batch-topic-1m-4p-byte-array-1-delayed";
+    return ()->"batch-topic-1m-4p-byte-array-3-delayed";
   }
 
   @Override
