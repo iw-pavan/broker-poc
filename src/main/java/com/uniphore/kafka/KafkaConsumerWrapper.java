@@ -3,6 +3,7 @@ package com.uniphore.kafka;
 import com.uniphore.common.Consumer;
 import com.uniphore.common.Queue;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -11,6 +12,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
@@ -21,7 +23,7 @@ public class KafkaConsumerWrapper implements Consumer {
   public KafkaConsumerWrapper() {
     Properties props = new Properties();
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-    props.put(ConsumerConfig.GROUP_ID_CONFIG, "batch-consumer-group-1399");
+    props.put(ConsumerConfig.GROUP_ID_CONFIG, "batch-consumer-group-1340");
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
     props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
         ByteArrayDeserializer.class.getName());
@@ -38,36 +40,40 @@ public class KafkaConsumerWrapper implements Consumer {
   @Override
   public void consume(Queue queue, java.util.function.Consumer<byte[]> consumer) {
     String topicName = queue.getName();
-    this.kafkaConsumer.subscribe(java.util.Collections.singletonList(topicName));
-    while (true) {
-      //Need Some interruption mechanism to exit this loop and close the consumer
-      ConsumerRecords<String, byte[]> records = kafkaConsumer.poll(Duration.ofSeconds(1));
-
-      // Track latest offsets per partition
-      Map<TopicPartition, OffsetAndMetadata> offsetsToCommit = new HashMap<>();
-
-      for (ConsumerRecord<String, byte[]> record : records) {
-        System.out.printf("Partition=%d, Offset=%d %n",
-            record.partition(), record.offset());
-        // Your business logic
-        consumer.accept(record.value());
-        // Remember the last offset for this partition
-        offsetsToCommit.put(
-            new TopicPartition(record.topic(), record.partition()),
-            new OffsetAndMetadata(record.offset() + 1)
-        );
+    kafkaConsumer.subscribe(Collections.singletonList(topicName));
+    try {
+      while (true) {
+        ConsumerRecords<String, byte[]> records = kafkaConsumer.poll(Duration.ofSeconds(1));
+        Map<TopicPartition, OffsetAndMetadata> offsetsToCommit = new HashMap<>();
+        for (ConsumerRecord<String, byte[]> record : records) {
+          System.out.printf("Partition=%d, Offset=%d %n",
+              record.partition(), record.offset());
+          consumer.accept(record.value());
+          offsetsToCommit.put(
+              new TopicPartition(record.topic(), record.partition()),
+              new OffsetAndMetadata(record.offset() + 1)
+          );
+        }
+        if (!offsetsToCommit.isEmpty()) {
+          kafkaConsumer.commitSync(offsetsToCommit);
+          offsetsToCommit.forEach((tp, offsetMeta) ->
+              System.out.printf("Committed offset %d for partition %d %n",
+                  offsetMeta.offset(), tp.partition()));
+        }
       }
-      if (!offsetsToCommit.isEmpty()) {
-        kafkaConsumer.commitSync(offsetsToCommit);
-        offsetsToCommit.forEach((tp, offsetMeta) ->
-            System.out.printf("Committed offset %d for partition %d %n",
-                offsetMeta.offset(), tp.partition()));
+    } catch (WakeupException e) {
+      // expected on shutdown
+    } finally {
+      try {
+        kafkaConsumer.commitSync(); // final commit if needed
+      } finally {
+        kafkaConsumer.close();
       }
     }
   }
 
   @Override
   public void close() {
-    kafkaConsumer.close();
+    kafkaConsumer.wakeup(); // triggers WakeupException in consume()
   }
 }
